@@ -1,0 +1,23 @@
+# CMake script that uninstalls the project.
+# It removes exactly the files listed in the install manifest
+# (install_manifest.txt), which `cmake --install` writes to the build
+# directory. Generated from cmake_uninstall.cmake.in by CMakeLists.txt.
+# See: https://cmake.org/cmake/help/latest/manual/cmake.1.html#install-a-project
+
+if(NOT EXISTS "@CMAKE_CURRENT_BINARY_DIR@/install_manifest.txt")
+    message(FATAL_ERROR
+        "Cannot uninstall: no install manifest found at "
+        "@CMAKE_CURRENT_BINARY_DIR@/install_manifest.txt. "
+        "Run `make install` first, and keep the build directory.")
+endif()
+
+file(READ "@CMAKE_CURRENT_BINARY_DIR@/install_manifest.txt" files)
+string(REGEX REPLACE "\n" ";" files "${files}")
+# Remove in reverse order: symlinks and files first, directories last.
+list(REVERSE files)
+foreach(file IN LISTS files)
+    message(STATUS "Uninstalling ${file}")
+    # `cmake -E rm` removes files and symlinks (a symlink is removed,
+    # not the file it points to) and needs no file to exist (-f).
+    execute_process(COMMAND ${CMAKE_COMMAND} -E rm -rf "${file}")
+endforeach()

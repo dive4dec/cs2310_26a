@@ -24,8 +24,13 @@ SHELL:=/bin/bash
 # Path to cmake executable
 CMAKE_COMMAND ?= $(shell which cmake)
 
+# Directory where `make install` places the artifacts.
+# Defaults to the user-local prefix ~/.local (no sudo required).
+# Override with, e.g., make install PREFIX=/home/me/.local
+PREFIX ?= $(HOME)/.local
+
 # Phony targets that are not actual files, but rather a command to be executed
-.PHONY: all generate build run clean vscode-clangd
+.PHONY: all generate build run clean install uninstall clean-all vscode-clangd
 
 # The main target to build the project
 all: generate build run
@@ -34,7 +39,7 @@ all: generate build run
 # See:
 # - CMake manual: https://cmake.org/cmake/help/latest/manual/cmake.1.html#generate-a-project-buildsystem
 generate:
-	$(CMAKE_COMMAND) -B "$(BUILD_DIR)" -S . -DCMAKE_CXX_COMPILER=$(CMAKE_CXX_COMPILER) -DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE)
+	$(CMAKE_COMMAND) -B "$(BUILD_DIR)" -S . -DCMAKE_CXX_COMPILER=$(CMAKE_CXX_COMPILER) -DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE) -DCMAKE_INSTALL_PREFIX=$(PREFIX)
 
 # Build the project after generate
 # See: https://cmake.org/cmake/help/latest/manual/cmake.1.html#build-a-project
@@ -44,6 +49,24 @@ build:
 # Run the executable after build
 run:
 	"./bin/addmul"
+
+# Install the artifacts (executable, libraries, headers) under $(PREFIX)
+# See: https://cmake.org/cmake/help/latest/manual/cmake.1.html#install-a-project
+# The executable finds the shared library relative to itself ($ORIGIN/../lib),
+# so no LD_LIBRARY_PATH is needed; only $(PREFIX)/bin may need a PATH entry.
+# `generate` is re-run so that overriding PREFIX (e.g.
+# `make install PREFIX=/home/me/.local`) always takes effect — CMake caches
+# the prefix from the previous configure otherwise.
+install: generate build
+	$(CMAKE_COMMAND) --install "$(BUILD_DIR)"
+	@echo "Installed to $(PREFIX)."
+	@echo "If $(PREFIX)/bin is not on your PATH, add the following to ~/.bashrc:"
+	@echo "  export PATH=\"$(PREFIX)/bin:\$$PATH\""
+
+# Remove the files previously installed by `make install`
+# (the uninstall script is generated at configure time by CMakeLists.txt)
+uninstall:
+	$(CMAKE_COMMAND) -P "$(BUILD_DIR)/cmake_uninstall.cmake"
 
 # Clean up the artifacts
 clean:

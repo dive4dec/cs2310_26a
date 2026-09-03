@@ -4,6 +4,8 @@
 #include "util.hpp"   // Cannot include more than one header at a time.
 #include <format>
 #include <iostream> // Angular bracket form <...>: Only search in system include directories.
+#include <string_view> // Compare command line arguments without copying them.
+// See: https://en.cppreference.com/w/cpp/string/basic_string/string_view
 
 // Using directive to bring names into the current scope.
 // See: https://en.cppreference.com/w/cpp/language/using_declaration
@@ -11,7 +13,22 @@ using std::cout, std::format, mymath::add, mymath::mul;
 
 // Main function as the entry point of the program.
 // See: https://en.cppreference.com/w/cpp/language/main_function
-int main() {
+int main(int argc, char* argv[]) {
+    // Command line arguments: argv[0] is the program name itself.
+    // See: https://en.cppreference.com/w/cpp/utility/program/argc
+    // Options are recognized before asking for any inputs.
+    if (argc > 1 && std::string_view(argv[1]) == "--help") {
+        cout << "Usage: addmul [OPTION]\n"
+             << "  --help     show this help and exit\n"
+             << "  --version  show the version and exit\n";
+        return 0;
+    }
+    if (argc > 1 && std::string_view(argv[1]) == "--version") {
+        // The version comes from project(VERSION ...) in CMakeLists.txt,
+        // compiled in by target_compile_definitions in src/CMakeLists.txt.
+        cout << "addmul " << PROJECT_VERSION << '\n';
+        return 0;
+    }
     // Variable declarations.
     // See: https://en.cppreference.com/w/cpp/language/declarations
     int a, b, c;
