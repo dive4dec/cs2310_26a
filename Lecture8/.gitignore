@@ -1,0 +1,6 @@
+# Ignore build artifacts and generated files
+/build/
+/bin/
+/lib/
+/private/
+/.clang-format
